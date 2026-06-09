@@ -6,14 +6,8 @@ USER root
 RUN mkdir -p /runner/python_patch
 COPY sitecustomize.py /runner/python_patch/
 
-# Keep ansible-runner worker stream identical to the base EE. Apply the ALPN
-# patch only when ansible-playbook runs, so worker stdout remains clean JSON.
-RUN mv /usr/local/bin/ansible-playbook /usr/local/bin/ansible-playbook.real && \
-		printf '%s\n' \
-			'#!/bin/sh' \
-			'export PYTHONPATH="/runner/python_patch${PYTHONPATH:+:$PYTHONPATH}"' \
-			'exec /usr/local/bin/ansible-playbook.real "$@"' \
-			> /usr/local/bin/ansible-playbook && \
-		chmod +x /usr/local/bin/ansible-playbook
+# Keep the original Python ansible-playbook entrypoint. Import the ALPN patch
+# inside ansible-playbook only, leaving ansible-runner worker unchanged.
+RUN sed -i '/^import sys$/a sys.path.insert(0, "/runner/python_patch")\nimport sitecustomize' /usr/local/bin/ansible-playbook
 
 USER 1000

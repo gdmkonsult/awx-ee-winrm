@@ -6,7 +6,7 @@ Custom AWX Execution Environment with ALPN fix for Windows Server 2025 WinRM com
 Windows Server 2025 WinRM over HTTPS (port 5986) does not support ALPN (Application-Layer Protocol Negotiation). Modern Python 3.11+ with urllib3 2.x automatically sends ALPN in TLS handshake, causing "Connection reset by peer" errors when connecting via IP address.
 
 ## Solution
-This EE disables ALPN by overriding `ssl.SSLContext.set_alpn_protocols` with a no-op function via `sitecustomize.py`, which is automatically loaded at Python startup.
+This EE disables ALPN for `ansible-playbook` by overriding `ssl.SSLContext.set_alpn_protocols` with a no-op function via `sitecustomize.py`.
 
 ## Features
 - Based on `ghcr.io/gdmkonsult/awx-ee:new`
@@ -59,8 +59,8 @@ Verified working with:
 
 The fix works by:
 1. `sitecustomize.py` is placed in `/runner/python_patch/`
-2. `PYTHONPATH` includes this directory
-3. Python automatically loads `sitecustomize.py` at startup
+2. The original `/usr/local/bin/ansible-playbook` Python entrypoint imports that patch
+3. `ansible-runner worker` remains identical to the base EE
 4. The module replaces `ssl.SSLContext.set_alpn_protocols` with a no-op function
 5. urllib3 calls the method but ALPN is not sent in TLS handshake
 6. Windows WinRM accepts the connection
