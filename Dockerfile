@@ -2,6 +2,10 @@ FROM ghcr.io/gdmkonsult/awx-ee:new
 
 USER root
 
+# Match AWX 24.6 worker stream expectations. Newer ansible-runner emitted
+# worker-stream output that AWX/Receptor failed to parse as JSON.
+RUN python3.12 -m pip install --no-cache-dir ansible-runner==2.4.1
+
 # Add ALPN fix for Windows Server 2025 WinRM compatibility
 RUN mkdir -p /runner/python_patch
 COPY sitecustomize.py /runner/python_patch/
