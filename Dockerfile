@@ -1,13 +1,8 @@
-FROM ghcr.io/gdmkonsult/awx-ee:new
+ARG BASE_IMAGE=ghcr.io/gdmkonsult/awx-ee:new
+FROM ${BASE_IMAGE}
 
 USER root
 
-# Add ALPN fix for Windows Server 2025 WinRM compatibility
-RUN mkdir -p /runner/python_patch
-COPY sitecustomize.py /runner/python_patch/
-
-# Keep the original Python ansible-playbook entrypoint. Import the ALPN patch
-# inside ansible-playbook only, leaving ansible-runner worker unchanged.
-RUN sed -i '/^import sys$/a sys.path.insert(0, "/runner/python_patch")\nimport sitecustomize' /usr/local/bin/ansible-playbook
+COPY sitecustomize.py /usr/local/lib/python3.12/site-packages/sitecustomize.py
 
 USER 1000
